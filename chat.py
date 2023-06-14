@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from langchain.callbacks import get_openai_callback
 import re
 import time
+from starlette.middleware.sessions import SessionMiddleware
 import sys
 #open_ai_model
 temp='%s%k%-%N%V%b%i%n%T%V%Y%L%a%W%N%T%M%9%I%o%u%x%z%T%3%B%l%b%k%F%J%y%h%0%n%P%X%A%s%J%h%7%8%t%W%h%a%2%f%d%z'
@@ -25,24 +26,22 @@ os.environ["OPENAI_API_KEY"] = api_key
 
 openai.api_key = api_key
 COMPLETIONS_MODEL = "text-davinci-002"
-
-class User:
-    def __init__(self):
-        self.current_user=None
-        self.user_data=None
-        self.email=None
-        self.full_name=None
-        self.level=None
-        self.path=None
-        self.interest=None
-        self.bills=[]
-        self.total_chat_duration=0
-        self.step='step1'
-        self.history=[]
-        self.vocabs=[]
-        self.messages=[]
-        self.last_response_time=None
-        self.template2="""
+user = {
+    "current_user": None,
+    "user_data": None,
+    "email": None,
+    "full_name": None,
+    "level": None,
+    "path": None,
+    "interest": None,
+    "bills": [],
+    "total_chat_duration": 0,
+    "step": "step1",
+    "history": [],
+    "vocabs": [],
+    "messages": [],
+    "last_response_time": None,
+    "t1": """
         \n
         history:
             user:please act as my friend to chat about any topic.Use many Emojis for each response(5 at least).chat me using my name.
@@ -71,16 +70,20 @@ class User:
             A2Zbot:sure ,I will check evrey single response and correct your mistake then continue to chatting.
             user:Respond by relying on history of conversation.
             A2zbot:ok.
-            {chat_history}
-            user: {question}
-            A2Zbot:
-        """
-        self.template="""
+    """,
+    "t2": """
+        {chat_history}
+        user: {question}
+        A2Zbot:
+    """,
+    "template": """
         as a Freind called "A2Zbot" who has same interests and goals.respond to user in smart way. 
         user name is {},english level is {},interests and goals are  {}.
-            """
-        self.memory=ConversationBufferMemory(memory_key="chat_history")
-    def convert_to_short_parts(self,response, max_length):
+    """
+}
+
+
+def convert_to_short_parts(response, max_length):
         parts = []
         pattern = r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s"
         sentences = re.split(pattern, response)
@@ -96,7 +99,7 @@ class User:
         parts = list(filter(lambda item: item != '', parts))
         return parts
 
-    def edit_sentences(self,sentences):
+def edit_sentences(sentences):
         def is_emoji(character):
             ascii_value = ord(character)
             return 1000 <= ascii_value  # نطاق السمايلات في ترميز ASCII
@@ -116,64 +119,72 @@ class User:
                 sentences[s]=sentences[s][len(temp):]
         sentences = list(filter(lambda item: item != '', sentences))         
         return sentences
-    def warmup(self,msg):
-        prompt_template = PromptTemplate(input_variables=["chat_history","question"], template=self.template+self.template2)
-        M=self.memory
-        llm_chain = LLMChain(
-            llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.7,
-            max_tokens=100, n=1),
-            prompt=prompt_template,
-            verbose=False,
-            memory=M
-    
-            )
-        start_time = time.time()  # Start the timer
-        with get_openai_callback() as cb:
-            result=llm_chain.predict(question=msg)
-            self.bills.append(cb)
-        end_time = time.time()  # End the timer
+def warmup(msg):
+    prompt_template = PromptTemplate(input_variables=["chat_history", "question"], template=user['template'] + user['t1'] + user['t2'])
+    memory = ConversationBufferMemory(memory_key="chat_history")
+    llm_chain = LLMChain(
+        llm=ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.7, max_tokens=100, n=1),
+        prompt=prompt_template,
+        verbose=False,
+        memory=memory
+    )
+    start_time = time.time()  # Start the timer
+    with get_openai_callback() as cb:
+        result = llm_chain.predict(question=msg)
+        user['bills'].append(cb)
+    end_time = time.time()  # End the timer
 
-        result=result.replace('A2ZBot:','',-1).replace('AI:','',-1).replace('A2Zbot:','',-1)
-        chat_time = end_time - start_time
-        self.total_chat_duration+=chat_time
-        last_response_time=end_time
+    result = result.replace('A2ZBot:', '', -1).replace('AI:', '', -1).replace('A2Zbot:', '', -1)
+    chat_time = end_time - start_time
+    user['total_chat_duration'] += chat_time
+    last_response_time = end_time
+    user['t1'] = user['t1'] + '\nuser:' + msg + '\nA2Zbot:' + result
+    return result
+
+
+def A2ZBot(prompt):
+    bot_response = openai.Completion.create(
+        prompt=prompt,
+        temperature=0.9,
+        max_tokens=700,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        model=COMPLETIONS_MODEL
+    )["choices"][0]["text"].strip(" \n")
+    return bot_response
+
+
+def check(bot_response, user_response, problem):
+    prompt = """check if "{}" in following conversation ? return 'yes' if it is true else return 'no' " .\n Bot: {} \nUser: {}""".format(
+        problem, bot_response.strip(), user_response.strip())
+    temp = A2ZBot(prompt)
+    if "no".lower() in temp.lower():
+        prompt = """give user example  response for this 'Bot:{}'  """.format(bot_response)
+        result = A2ZBot(prompt)
         return result
-    def A2ZBot(self,prompt):
-        bot_response=openai.Completion.create(
-                prompt=prompt,
-                temperature=0.9,
-                max_tokens=700,
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0,
-                model=COMPLETIONS_MODEL
-            )["choices"][0]["text"].strip(" \n")
-        return bot_response
-    def check(self,bot_response,user_response,problem):
-        prompt="""check if "{}" in following conversation ? return 'yes' if it is true else return 'no' " .\n Bot: {} \nUser: {}""".format(problem,bot_response.strip(),user_response.strip())
-        temp=self.A2ZBot(prompt)
-        if "no".lower() in temp.lower():
-            prompt="""give user example  response for this 'Bot:{}'  """.format(bot_response)
-            result=self.A2ZBot(prompt)
-            return result
+    else:
+        return False
+
+
+def conversation(user_response):
+    
+    if user['step'] == 'step1':
+        user['step'] = 'step2'
+        bot_response = "What is your name?"
+        user['history'].append(bot_response)
+        return [bot_response]
+
+    if user['step'] == 'step2':
+        bot_response = check(user['history'][-1], user_response,
+                             'user says his name no matter if he write his name in small letters')
+        if bot_response == "xxxxx":
+            return ['This is an example for good response:\n' + bot_response]
         else:
-            return False
-    def conversation(self,user_response):
-  
-        if self.step=='step1':
-                self.step='step2'
-                bot_response= "What is your name?"
-                self.history.append(bot_response)
-                return [bot_response]
-        if self.step=='step2':
-            bot_response=self.check(self.history[-1],user_response,'user says his name no matter if he write his name in small letters')
-            if bot_response=="xxxxx":
-                return ['This is an example for good response:\n'+bot_response]
-            else:
-                self.history.append(user_response)
-                self.full_name=user_response
-                self.step='step3'
-                bot_response="""What is your current english level:
+            user['history'].append(user_response)
+            user['full_name'] = user_response
+            user['step'] = 'step3'
+            bot_response = """What is your current english level:
                     <ul>
                         <li>A1</li>
                         <li>A2</li>
@@ -184,18 +195,18 @@ class User:
                     </ul>
                 
                 """
-                self.history.append(bot_response)
-                return [bot_response]
-        if self.step=='step3':
-            bot_response=self.check(self.history[-1],user_response,'User must to write his English Level from Bot options ')
-            if bot_response=="xxxxx":
-            
-                return ['This is an example for good response:\n'+bot_response]
-            else:
-                self.history.append(user_response)
-                self.level=user_response
-                self.step='step4'
-                bot_response=""" 
+            user['history'].append(bot_response)
+            return [bot_response]
+
+    if user['step'] == 'step3':
+        bot_response = check(user['history'][-1], user_response, 'User must to write his English Level from Bot options ')
+        if bot_response == "xxxxx":
+            return ['This is an example for good response:\n' + bot_response]
+        else:
+            user['history'].append(user_response)
+            user['level'] = user_response
+            user['step'] = 'step4'
+            bot_response = """
                 Please choose one or two paths from the following pathes: 
                     
                     <ul >
@@ -206,19 +217,19 @@ class User:
                 <li>Default,General English</li> 
                     </ul>
                 """
-                
-                self.history.append(bot_response)
-                return [bot_response]
-        if self.step=='step4':
-            bot_response=self.check(self.history[-1],user_response,'User write his English Path from Bot options')
-            if bot_response=="xxxxx":
-            
-                return ['This is an example for good response:\n'+bot_response]
-            else:
-                self.history.append(user_response)
-                self.path=user_response
-                self.step='step5'
-                bot_response="""
+
+            user['history'].append(bot_response)
+            return [bot_response]
+
+    if user['step'] == 'step4':
+        bot_response = check(user['history'][-1], user_response, 'User write his English Path from Bot options')
+        if bot_response == "xxxxx":
+            return ['This is an example for good response:\n' + bot_response]
+        else:
+            user['history'].append(user_response)
+            user['path'] = user_response
+            user['step'] = 'step5'
+            bot_response = """
                 what are your interests?
                     
                     <ul>
@@ -239,28 +250,30 @@ class User:
                     <li> ... </li> 
                     </ul>
                 """
-                self.history.append(bot_response)
-                return [bot_response]
-        if self.step=='step5':
-            bot_response=self.check(self.history[-1],user_response,'User write his interests')
-            if bot_response=="xxxxx":
-            
-                return ['This is an example for good response:\n'+bot_response]
-            else:
-                self.history.append(user_response)
-                self.interest=user_response
-                self.step='step6'
-                bot_response="""welcom to A2Zbot,let's start.
+            user['history'].append(bot_response)
+            return [bot_response]
+
+    if user['step'] == 'step5':
+        bot_response = check(user['history'][-1], user_response, 'User write his interests')
+        if bot_response == "xxxxx":
+            return ['This is an example for good response:\n' + bot_response]
+        else:
+            user['history'].append(user_response)
+            user['interest'] = user_response
+            user['step'] = 'step6'
+            bot_response = """welcom to A2Zbot,let's start.
                     """
-                self.history.append(bot_response)
-                self.template=self.template.format(self.full_name,self.level,self.path+' '+self.interest)
-                return [bot_response]
-            
-        if self.step=='step6' and user_response.strip()!='RESET' and user_response.strip()!='START_STUDY_PLAN' :
-            temp=self.warmup(user_response)
-            edit_result=self.convert_to_short_parts(temp,30)
-            edit_result=self.edit_sentences(edit_result)
-            return edit_result
+            user['history'].append(bot_response)
+            user['template'] = user['template'].format(user['full_name'], user['level'], user['path'] + ' ' + user['interest'])
+            return [bot_response]
+
+    if user['step'] == 'step6' and user_response.strip() != 'RESET' and user_response.strip() != 'START_STUDY_PLAN':
+        temp = warmup(user_response)
+        edit_result = convert_to_short_parts(temp, 30)
+        edit_result = edit_sentences(edit_result)
+        return edit_result
+
+    
 #openai_model
 
 script_dir = os.path.dirname(__file__)
@@ -274,8 +287,7 @@ app.mount("/static", StaticFiles(directory=st_abs_file_path), name="static")
 
 
 
-sessions={}
-
+app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
 @app.get("/", response_class=HTMLResponse)
 def login(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -283,13 +295,10 @@ def login(request: Request):
 
 @app.post("/login", response_class=HTMLResponse)
 async def process_login(request: Request):
-    user_object=User()
     
     form_data = await request.form()
     username = form_data["username"]
-    global sessions  # جعل المتغير sessions متغيرًا عامًا
-    sessions[username] = user_object
-    print(sessions.keys())
+    request.session[username] = user
     unique_link = f"/home/{username}"
     return templates.TemplateResponse("redirect.html", {"request": request, "link": unique_link})
 
@@ -298,11 +307,11 @@ async def process_login(request: Request):
 def home(request: Request, username: str):
     return templates.TemplateResponse("home.html", {"request": request, "username": username})
 @app.get("/getChatBotResponse")
-@app.get("/getChatBotResponse")
 def get_bot_response(msg: str,request: Request):
     try:
-        msg,user=msg.split('-#-')
-        result = sessions[user].conversation(msg)
+        msg,user_name=msg.split('-#-')
+        user = request.session.get(user_name)
+        result = conversation(msg)
         return result
     except Exception as e:
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -311,5 +320,6 @@ def get_bot_response(msg: str,request: Request):
             return [error_details,str(sessions.keys())] 
         except:
             return "empty data"
+
 if __name__ == "__main__":
     uvicorn.run("chat:app", reload=True)
