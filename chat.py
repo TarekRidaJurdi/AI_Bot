@@ -299,6 +299,7 @@ def home(request: Request, username: str):
     return templates.TemplateResponse("home.html", {"request": request, "username": username})
 @app.get("/getChatBotResponse")
 def get_bot_response(msg: str,request: Request):
+    return 'Tarek'
     try:
         msg,user=msg.split('-#-')
         result = sessions[user].conversation(msg)
@@ -307,7 +308,7 @@ def get_bot_response(msg: str,request: Request):
         exc_type, exc_value, exc_traceback = sys.exc_info()
         try:
             error_details = f"Exception Type: {exc_type}\nException Value: {exc_value}\nTraceback: {exc_traceback}"
-            return ['ok'] 
+            return [error_details,str(sessions.keys())] 
         except:
             return "empty data"
 
