@@ -307,7 +307,7 @@ def get_bot_response(msg: str,request: Request):
         exc_type, exc_value, exc_traceback = sys.exc_info()
         try:
             error_details = f"Exception Type: {exc_type}\nException Value: {exc_value}\nTraceback: {exc_traceback}"
-            return [error_details,str(sessions.keys())] 
+            return ['ok'] 
         except:
             return "empty data"
 
