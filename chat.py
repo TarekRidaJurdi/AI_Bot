@@ -299,7 +299,6 @@ def home(request: Request, username: str):
     return templates.TemplateResponse("home.html", {"request": request, "username": username})
 @app.get("/getChatBotResponse")
 def get_bot_response(msg: str,request: Request):
-    return 'Tarek'
     try:
         msg,user=msg.split('-#-')
         result = sessions[user].conversation(msg)
