@@ -298,18 +298,16 @@ async def process_login(request: Request):
 def home(request: Request, username: str):
     return templates.TemplateResponse("home.html", {"request": request, "username": username})
 @app.get("/getChatBotResponse")
+@app.get("/getChatBotResponse")
 def get_bot_response(msg: str,request: Request):
-    try:
-        msg,user=msg.split('-#-')
-        result = sessions[user].conversation(msg)
-        return result
-    except Exception as e:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
+    while True:
         try:
-            error_details = f"Exception Type: {exc_type}\nException Value: {exc_value}\nTraceback: {exc_traceback}"
-            return [error_details,str(sessions.keys())] 
-        except:
-            return "empty data"
+            msg,user=msg.split('-#-')
+            result = sessions[user].conversation(msg)
+            break
+        except Exception as e:
+            pass
+    return result
 
 if __name__ == "__main__":
     uvicorn.run("chat:app", reload=True)
