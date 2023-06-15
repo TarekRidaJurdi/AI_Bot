@@ -232,13 +232,16 @@ def conversation(user_response):
             user['history'].append(user_response)
             user['interest'] = user_response
             user['step'] = 'step6'
-            bot_response = """welcom to A2Zbot,let's start.
-                    """
             user['history'].append(bot_response)
             user['template'] = user['template'].format(user['full_name'], user['level'], user['path'] + ' ' + user['interest'])
             data[user_name]=user
             save_dict_to_json(data, 'data.json')
-            return [bot_response]
+            temp = warmup('hey!')
+            edit_result = convert_to_short_parts(temp, 30)
+            edit_result = edit_sentences(edit_result)
+            data[user_name]=user
+            save_dict_to_json(data, 'data.json')
+            return edit_result
 
     if user['step'] == 'step6' and user_response.strip() != 'RESET' and user_response.strip() != 'START_STUDY_PLAN':
         temp = warmup(user_response)
