@@ -134,7 +134,7 @@ def conversation(user_response):
     
     if user['step'] == 'step1':
         user['step'] = 'step2'
-        bot_response = "What is your name?"
+        bot_response = "What is your name?😃"
         user['history'].append(bot_response)
         data[user_name]=user
         save_dict_to_json(data, 'data.json')
@@ -143,13 +143,13 @@ def conversation(user_response):
     if user['step'] == 'step2':
         bot_response = check(user['history'][-1], user_response,
                              'user says his name no matter if he write his name in small letters')
-        if bot_response == "xxxxx":
+        if bot_response:
             return ['This is an example for good response:\n' + bot_response]
         else:
             user['history'].append(user_response)
             user['full_name'] = user_response
             user['step'] = 'step3'
-            bot_response = """What is your current english level:
+            bot_response = """What is your current english level?😊
                     <ul>
                         <li>A1</li>
                         <li>A2</li>
@@ -167,14 +167,14 @@ def conversation(user_response):
 
     if user['step'] == 'step3':
         bot_response = check(user['history'][-1], user_response, 'User must to write his English Level from Bot options ')
-        if bot_response == "xxxxx":
+        if bot_response:
             return ['This is an example for good response:\n' + bot_response]
         else:
             user['history'].append(user_response)
             user['level'] = user_response
             user['step'] = 'step4'
             bot_response = """
-                Please choose one or two paths from the following pathes: 
+                Please choose one or more from the following pathes.🤔
                     
                     <ul >
                         <li>Travel</li>
@@ -192,14 +192,14 @@ def conversation(user_response):
 
     if user['step'] == 'step4':
         bot_response = check(user['history'][-1], user_response, 'User write his English Path from Bot options')
-        if bot_response == "xxxxx":
+        if bot_response:
             return ['This is an example for good response:\n' + bot_response]
         else:
             user['history'].append(user_response)
             user['path'] = user_response
             user['step'] = 'step5'
             bot_response = """
-                what are your interests?
+                what are your interests?You can choose one or more of the following options.👋
                     
                     <ul>
                         <li>Sport </li> 
@@ -226,14 +226,14 @@ def conversation(user_response):
 
     if user['step'] == 'step5':
         bot_response = check(user['history'][-1], user_response, 'User write his interests')
-        if bot_response == "xxxxx":
+        if bot_response:
             return ['This is an example for good response:\n' + bot_response]
         else:
             user['history'].append(user_response)
             user['interest'] = user_response
             user['step'] = 'step6'
             user['history'].append(bot_response)
-            user['template'] = user['template'].format(user['full_name'], user['level'], user['path'] + ' ' + user['interest'])
+            user['template'] = user['template'].format(user['full_name'], user['level'], user['path'] + ' and ' + user['interest'])
             data[user_name]=user
             save_dict_to_json(data, 'data.json')
             temp = warmup('hey!')
