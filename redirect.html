@@ -2,13 +2,11 @@
 <html>
 <head>
     <title>Redirecting...</title>
-    <script type="text/javascript">
-        window.onload = function() {
-            window.location.href = "{{ link }}";
-        }
-    </script>
+    <meta http-equiv="refresh" content="1;URL={{ link }}">
 </head>
 <body>
-    
+    <h1>Redirecting...</h1>
+    <p>You will be redirected to the home page shortly.</p>
+    <p>If you are not redirected, click <a href="{{ link }}">here</a>.</p>
 </body>
 </html>
