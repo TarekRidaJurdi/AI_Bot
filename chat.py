@@ -16,6 +16,7 @@ from langchain.callbacks import get_openai_callback
 import re
 import time
 import sys
+import json
 import random
 # Function to load a dictionary from a JSON file
 def load_dict_from_json(file_path):
@@ -148,91 +149,25 @@ def conversation(user_response):
             user['history'].append(user_response)
             user['full_name'] = user_response
             user['step'] = 'step3'
-            bot_response = """What is your current english level?😊
-                    <ul>
-                        <li>A1</li>
-                        <li>A2</li>
-                        <li>B1</li>
-                        <li>B2</li>
-                        <li>C1</li>
-                        <li>C2</li>
-                    </ul>
-                
+            bot_response = """
+                what are your interests?👋
                 """
             user['history'].append(bot_response)
             data[user_name]=user
             save_dict_to_json(data, 'data.json')
             return [bot_response]
-
+    
     if user['step'] == 'step3':
-        bot_response = check(user['history'][-1], user_response, 'User must to write his English Level from Bot options ')
-        if bot_response:
-            return ['This is an example for good response:\n' + bot_response]
-        else:
-            user['history'].append(user_response)
-            user['level'] = user_response
-            user['step'] = 'step4'
-            bot_response = """
-                Please choose one or more from the following pathes.🤔
-                    
-                    <ul >
-                        <li>Travel</li>
-                <li>Business</li>
-                <li>Fun/communication</li>
-                <li>Education</li>
-                <li>Default,General English</li> 
-                    </ul>
-                """
-
-            user['history'].append(bot_response)
-            data[user_name]=user
-            save_dict_to_json(data, 'data.json')
-            return [bot_response]
-
-    if user['step'] == 'step4':
-        bot_response = check(user['history'][-1], user_response, 'User write his English Path from Bot options')
-        if bot_response:
-            return ['This is an example for good response:\n' + bot_response]
-        else:
-            user['history'].append(user_response)
-            user['path'] = user_response
-            user['step'] = 'step5'
-            bot_response = """
-                what are your interests?You can choose one or more of the following options.👋
-                    
-                    <ul>
-                        <li>Sport </li> 
-                    <li>Art </li> 
-                    <li> History </li> 
-                    <li> Technology </li> 
-                    <li> Gaming </li> 
-                    <li> Movies </li> 
-                    <li> Culture </li> 
-                    <li> Management </li> 
-                    <li>Science </li> 
-                    <li>  Adventure </li> 
-                    <li> Space </li> 
-                    <li>Cooking </li> 
-                    <li> Reading </li> 
-                    <li> Lifestyle </li>
-                    <li> ... </li> 
-                    </ul>
-                """
-            user['history'].append(bot_response)
-            data[user_name]=user
-            save_dict_to_json(data, 'data.json')
-            return [bot_response]
-
-    if user['step'] == 'step5':
         bot_response = check(user['history'][-1], user_response, 'User write his interests')
         if bot_response:
             return ['This is an example for good response:\n' + bot_response]
         else:
             user['history'].append(user_response)
             user['interest'] = user_response
-            user['step'] = 'step6'
+            user['step'] = 'step4'
             user['history'].append(bot_response)
-            user['template'] = user['template'].format(user['full_name'], user['level'], user['path'] + ' and ' + user['interest'])
+            user['template'] = user['template'].format(user['full_name'],user['interest'])
+            print(user['template'])
             data[user_name]=user
             save_dict_to_json(data, 'data.json')
             temp = warmup('hey!')
@@ -242,7 +177,7 @@ def conversation(user_response):
             save_dict_to_json(data, 'data.json')
             return edit_result
 
-    if user['step'] == 'step6' and user_response.strip() != 'RESET' and user_response.strip() != 'START_STUDY_PLAN':
+    if user['step'] == 'step4' and user_response.strip() != 'RESET' and user_response.strip() != 'START_STUDY_PLAN':
         temp = warmup(user_response)
         edit_result = convert_to_short_parts(temp, 30)
         edit_result = edit_sentences(edit_result)
@@ -262,6 +197,8 @@ app = FastAPI()
 
 templates = Jinja2Templates(directory="")
 app.mount("/static", StaticFiles(directory=st_abs_file_path), name="static")
+
+
 
 @app.get("/", response_class=HTMLResponse)
 async def process_login(request: Request):
@@ -317,12 +254,12 @@ async def process_login(request: Request):
     """,
     "template": """
         as a Freind called "A2Zbot" who has same interests and goals.respond to user in smart way. 
-        user name is {},english level is {},interests and goals are  {}.
+        user name is {},user interests  are  {}.
     """
 }
 
 
-    username = str(random.randint(1,9999999))
+    username =random.randint(1,9999999)
     data = load_dict_from_json('data.json')
     data[username]=user
     save_dict_to_json(data, 'data.json')
@@ -334,6 +271,8 @@ def home(request: Request, username: str):
     return templates.TemplateResponse("home.html", {"request": request, "username": username})
 @app.get("/getChatBotResponse")
 def get_bot_response(msg: str,request: Request):
+    user_agent = request.client.host
+    print(user_agent)
     try: 
         result = conversation(msg)
         return result
