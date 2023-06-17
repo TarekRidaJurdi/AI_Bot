@@ -17,7 +17,7 @@ import re
 import time
 import sys
 import json
-
+import uuid
 # Function to load a dictionary from a JSON file
 def load_dict_from_json(file_path):
     with open(file_path, 'r') as file:
@@ -264,14 +264,29 @@ app = FastAPI()
 templates = Jinja2Templates(directory="")
 app.mount("/static", StaticFiles(directory=st_abs_file_path), name="static")
 
+def encrypt(text):
+    encrypted_text = ""
+    for char in text:
+        # Get the ASCII value of the character
+        ascii_value = ord(char)
+        
+        # Apply the offset of 2
+        encrypted_ascii = ascii_value + 2
+        
+        # Handle wrapping around if the encrypted ASCII value exceeds the range of printable characters
+        if encrypted_ascii > 126:
+            encrypted_ascii -= 95
+        
+        # Convert the encrypted ASCII value back to a character
+        encrypted_char = chr(encrypted_ascii)
+        
+        # Append the encrypted character to the encrypted text
+        encrypted_text += encrypted_char
+    
+    return encrypted_text
 
 
 @app.get("/", response_class=HTMLResponse)
-def login(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
-@app.post("/login", response_class=HTMLResponse)
 async def process_login(request: Request):
     user = {
     "current_user": None,
@@ -330,14 +345,13 @@ async def process_login(request: Request):
 }
 
 
-    form_data = await request.form()
-    username = form_data["username"]
+    username = str( ':'.join(['{:02x}'.format((uuid.getnode() >> i) & 0xFF) for i in range(0, 48, 8)]))
+    username=encrypt(username)
     data = load_dict_from_json('data.json')
     data[username]=user
     save_dict_to_json(data, 'data.json')
     unique_link = f"/home/{username}"
     return templates.TemplateResponse("redirect.html", {"request": request, "link": unique_link})
-
 
 @app.get("/home/{username}", response_class=HTMLResponse)
 def home(request: Request, username: str):
