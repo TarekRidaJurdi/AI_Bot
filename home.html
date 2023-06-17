@@ -10,7 +10,7 @@
   </head>
 
 <body>
-    <p id="userid">{{username}}<p>
+    <p id="userid" style="display: none;">{{username}}<p>
   
       <div class="fabs">
         <div class="chat">
@@ -65,7 +65,6 @@
             url: "https://bot.zucodia.com/static/js/a2z.js", // تعديل الـ URL إذا كانت مسار الملف مختلفًا
             dataType: "script",
             success: function(data) {
-              // تم تحميل الملف بنجاح، يمكنك استخدامه هنا
               console.log("OK a2z.js");
             },
             error: function() {
