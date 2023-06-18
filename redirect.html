@@ -2,11 +2,22 @@
 <html>
 <head>
     <title>report</title>
+    <style>
+        .red { color: red; }
+        .blue { color: blue; }
+        .green { color: green; }
+        .orange { color: orange; }
+    </style>
 </head>
 <body>
     {% for user in users %}
-      <li>{{ user }}</li>
-      <br>
+        <li>
+            name: <span class="green">{{ user['full_name'] }}</span>|||
+            cost: <span class="red">{{ user['total_cost'] }}</span>|||
+            token: <span class="blue">{{ user['total_tokens'] }}</span>|||
+            total time: <span class="orange">{{ user['total_chat_duration'] }}</span>
+        </li>
+        <br>
     {% endfor %}
 </body>
 </html>
