@@ -275,6 +275,10 @@ def send(request: Request):
       
     data = load_dict_from_json('data.json')
     return templates.TemplateResponse("redirect.html", {"request": request,"users":data.values()})
+@app.get("/reset_tarek")
+def reset(request: Request):
+    save_dict_to_json({}, 'data.json')
+
       
 if __name__ == "__main__":
     uvicorn.run("chat:app", reload=True)
