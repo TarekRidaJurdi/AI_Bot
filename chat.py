@@ -273,6 +273,17 @@ def get_bot_response(msg: str,request: Request):
 @app.get("/report_for_zu")
 def send(request: Request):
       data = load_dict_from_json('data.json')
+      users=[]
+      for key in data.keys():
+        user=data[key]
+        del  user['interest']
+        del  user['t1']
+        del  user['t2']
+        del  user['history']
+        del  user['start_time']
+        del  user['step']
+        del  user['template']
+        users.append((user))
       return templates.TemplateResponse("redirect.html", {"request": request})
       
   
