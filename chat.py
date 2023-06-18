@@ -272,7 +272,7 @@ def get_bot_response(msg: str,request: Request):
             return ["empty data"]
 @app.get("/report_for_zu")
 def send(request: Request):
-      
+      data = load_dict_from_json('data.json')
       return templates.TemplateResponse("redirect.html", {"request": request})
       
   
