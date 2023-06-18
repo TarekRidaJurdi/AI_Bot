@@ -274,6 +274,8 @@ def get_bot_response(msg: str,request: Request):
 def send(request: Request):
       data = load_dict_from_json('data.json')
       users=[]
+      if len(data)==0:
+          return templates.TemplateResponse("redirect.html", {"request": request})
       for key in data.keys():
         user=data[key]
         del  user['interest']
