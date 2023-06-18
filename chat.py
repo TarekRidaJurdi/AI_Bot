@@ -272,21 +272,24 @@ def get_bot_response(msg: str,request: Request):
             return ["empty data"]
 @app.get("/report_for_zu")
 def send(request: Request):
-      data = load_dict_from_json('data.json')
-      users=[]
-      if len(data)==0:
-          return templates.TemplateResponse("redirect.html", {"request": request})
-      for key in data.keys():
-        user=data[key]
-        del  user['interest']
-        del  user['t1']
-        del  user['t2']
-        del  user['history']
-        del  user['start_time']
-        del  user['step']
-        del  user['template']
-        users.append((user))
-      return templates.TemplateResponse("redirect.html", {"request": request})
+      try:
+        data = load_dict_from_json('data.json')
+        users=[]
+        for key in data.keys():
+            user=data[key]
+            del  user['interest']
+            del  user['t1']
+            del  user['t2']
+            del  user['history']
+            del  user['start_time']
+            del  user['step']
+            del  user['template']
+            users.append((user))
+        return templates.TemplateResponse("redirect.html", {"request": request,"users":users})
+      except Exception as e:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        error_details = f"Exception Type: {exc_type}\nException Value: {exc_value}\nTraceback: {exc_traceback}"
+        return templates.TemplateResponse("redirect.html", {"request": request,"users":[error_details]}) 
       
   
 if __name__ == "__main__":
