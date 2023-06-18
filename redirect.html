@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Redirecting...</title>
-    <meta http-equiv="refresh" content="0.01;URL={{ link }}">
+    <title>report</title>
 </head>
 <body>
-    <h1>Redirecting...</h1>
-    <p>You will be redirected to the home page shortly.</p>
-    <p>If you are not redirected, click <a href="{{ link }}">here</a>.</p>
+    {% for user in users %}
+      <li>{{ user }}</li>
+      <br>
+    {% endfor %}
 </body>
 </html>
