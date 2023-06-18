@@ -21,7 +21,6 @@
               <img src="https://static.vecteezy.com/system/resources/previews/019/786/706/original/chatbot-icon-cute-smiling-robot-cartoon-character-illustration-png.png"/>
               </div>
               <span id="chat_head">User</span> <br> <span class="agent">Agent</span> <span class="online">(Online)</span>
-             <span id="chat_fullscreen_loader" class="chat_fullscreen_loader"><i class="fullscreen zmdi zmdi-window-maximize"></i></span>
             </div>
           </div>
           <!--chat header end-->
@@ -49,7 +48,6 @@
         
        <!--text input and submit button-->
           <div class="fab_field">
-            <a id="fab_camera" class="fab"><i class="zmdi zmdi-camera"></i></a>
             <a id="fab_send" class="fab"><i class="zmdi zmdi-mail-send"></i></a>
             <textarea id="chatSend" name="chat_message" placeholder="Send a message" class="chat_field chat_message"></textarea>
             <textarea id="userInput" name="user_input" style="display: none;"></textarea>
@@ -65,6 +63,7 @@
             url: "https://bot.zucodia.com/static/js/a2z.js", // تعديل الـ URL إذا كانت مسار الملف مختلفًا
             dataType: "script",
             success: function(data) {
+              // تم تحميل الملف بنجاح، يمكنك استخدامه هنا
               console.log("OK a2z.js");
             },
             error: function() {
