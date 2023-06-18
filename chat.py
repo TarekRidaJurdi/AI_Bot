@@ -89,16 +89,14 @@ def conversation(user_response):
             memory=memory
         )
         result = llm_chain.predict(question=msg)
-        #start_time = time.time()  # Start the timer
-        #with get_openai_callback() as cb:
-        #    result = llm_chain.predict(question=msg)
-        #    user['bills'].append(cb)
-        #end_time = time.time()  # End the timer
-
+        with get_openai_callback() as cb:
+            result = llm_chain.predict(question=msg)
+            user['total_cost']+=cb.total_cost
+            user['total_tokens']+=cb.total_tokens
+        
         result = result.replace('A2ZBot:', '', -1).replace('AI:', '', -1).replace('A2Zbot:', '', -1)
-        #chat_time = end_time - start_time
-        #user['total_chat_duration'] += chat_time
-        #last_response_time = end_time
+        end_time = time.time()  # End the timer
+        user['total_chat_duration'] = end_time - user['start_time']
         user['t1'] = user['t1'] + '\nuser:' + msg + '\nA2Zbot:' + result
         data[user_name]=user
         save_dict_to_json(data, 'data.json')
@@ -167,7 +165,6 @@ def conversation(user_response):
             user['step'] = 'step4'
             user['history'].append(bot_response)
             user['template'] = user['template'].format(user['full_name'],user['interest'])
-            print(user['template'])
             data[user_name]=user
             save_dict_to_json(data, 'data.json')
             temp = warmup('hey!')
@@ -200,23 +197,19 @@ app.mount("/static", StaticFiles(directory=st_abs_file_path), name="static")
 
 
 
+
 @app.get("/", response_class=HTMLResponse)
-async def process_login(request: Request):
+def home(request: Request):
+    
     user = {
-    "current_user": None,
-    "user_data": None,
-    "email": None,
     "full_name": None,
-    "level": None,
-    "path": None,
     "interest": None,
-    "bills": [],
     "total_chat_duration": 0,
     "step": "step1",
     "history": [],
-    "vocabs": [],
-    "messages": [],
-    "last_response_time": None,
+    "total_cost":0.0,
+    "total_tokens":0.0,
+    "start_time":0.0,
     "t1": """
         \n
         history:
@@ -257,22 +250,16 @@ async def process_login(request: Request):
         user name is {},user interests  are  {}.
     """
 }
-
+    
 
     username =random.randint(1,9999999)
     data = load_dict_from_json('data.json')
+    user['start_time']=time.time()
     data[username]=user
     save_dict_to_json(data, 'data.json')
-    unique_link = f"/home/{username}"
-    return templates.TemplateResponse("redirect.html", {"request": request, "link": unique_link})
-
-@app.get("/home/{username}", response_class=HTMLResponse)
-def home(request: Request, username: str):
     return templates.TemplateResponse("home.html", {"request": request, "username": username})
 @app.get("/getChatBotResponse")
 def get_bot_response(msg: str,request: Request):
-    user_agent = request.client.host
-    print(user_agent)
     try: 
         result = conversation(msg)
         return result
