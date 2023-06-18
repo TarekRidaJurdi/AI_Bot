@@ -290,7 +290,5 @@ def send(request: Request):
         exc_type, exc_value, exc_traceback = sys.exc_info()
         error_details = f"Exception Type: {exc_type}\nException Value: {exc_value}\nTraceback: {exc_traceback}"
         return templates.TemplateResponse("redirect.html", {"request": request,"users":[error_details]}) 
-      
-  
 if __name__ == "__main__":
     uvicorn.run("chat:app", reload=True)
