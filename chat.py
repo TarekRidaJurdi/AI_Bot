@@ -18,12 +18,6 @@ import time
 import sys
 import json
 import random
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
-from datetime import date
 # Function to load a dictionary from a JSON file
 def load_dict_from_json(file_path):
     with open(file_path, 'r') as file:
@@ -276,9 +270,10 @@ def get_bot_response(msg: str,request: Request):
             return [error_details,str(sessions.keys())] 
         except:
             return ["empty data"]
-@app.get("/send_report")
+@app.get("/report_for_zu")
 def send(request: Request):
       data = load_dict_from_json('data.json')
+      users=[]
       for key in data.keys():
         user=data[key]
         del  user['interest']
@@ -288,62 +283,9 @@ def send(request: Request):
         del  user['start_time']
         del  user['step']
         del  user['template']
-        data[key]=user
-      save_dict_to_json(data, 'report.json')
-      fromaddr = "tarek.rida.jurdi@gmail.com"
-      toaddr = "zu.jah.19@gmail.com"
-      msg = MIMEMultipart()
-        
-        # storing the senders email address  
-      msg['From'] = fromaddr
-        
-        # storing the receivers email address 
-      msg['To'] = toaddr
-        
-        # storing the subject 
-      msg['Subject'] = "AI bot report"+" "+str(date.today())
-        
-        # string to store the body of the mail
-      body = " "
-        
-        # attach the body with the msg instance
-      msg.attach(MIMEText(body, 'plain'))
-        
-        # open the file to be sent 
-      filename = "report.json"
-      attachment = open(filename, "rb")
-        
-        # instance of MIMEBase and named as p
-      p = MIMEBase('application', 'octet-stream')
-        
-        # To change the payload into encoded form
-      p.set_payload((attachment).read())
-        
-        # encode into base64
-      encoders.encode_base64(p)
-        
-      p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
-        
-        # attach the instance 'p' to instance 'msg'
-      msg.attach(p)
-        
-        # creates SMTP session
-      s = smtplib.SMTP('smtp.gmail.com', 587)
-        
-        # start TLS for security
-      s.starttls()
-        
-        # Authentication
-      s.login(fromaddr, "jdqnwvwputeeuqxb")
-        
-        # Converts the Multipart msg into a string
-      text = msg.as_string()
-        
-        # sending the mail
-      s.sendmail(fromaddr, toaddr, text)
-        
-        # terminating the session
-      s.quit()
+        users.append((user))
+      return templates.TemplateResponse("redirect.html", {"request": request,"users":users})
+      
   
 if __name__ == "__main__":
     uvicorn.run("chat:app", reload=True)
