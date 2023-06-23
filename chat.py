@@ -44,24 +44,24 @@ def conversation(user_response):
     data = load_dict_from_json('data.json')
     user=data[user_name]
     def convert_to_short_parts(response, max_length):
-    parts = []
-    pattern = r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)(?<!\d\.)\s"
-    sentences = re.split(pattern, response)
-    current_part = ""
-    for sentence in sentences:
-        if len(current_part) + len(sentence) <= max_length:
-            current_part += sentence
-        elif sentence.endswith('.'):
-            current_part += sentence
+        parts = []
+        pattern = r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)(?<!\d\.)\s"
+        sentences = re.split(pattern, response)
+        current_part = ""
+        for sentence in sentences:
+            if len(current_part) + len(sentence) <= max_length:
+                current_part += sentence
+            elif sentence.endswith('.'):
+                current_part += sentence
+                parts.append(current_part)
+                current_part = ""
+            else:
+                parts.append(current_part)
+                current_part = sentence
+        if current_part != '':
             parts.append(current_part)
-            current_part = ""
-        else:
-            parts.append(current_part)
-            current_part = sentence
-    if current_part != '':
-        parts.append(current_part)
-    parts = list(filter(lambda item: item != '', parts))
-    return parts
+        parts = list(filter(lambda item: item != '', parts))
+        return parts
 
 
     def edit_sentences(sentences):
