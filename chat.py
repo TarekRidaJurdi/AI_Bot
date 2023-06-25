@@ -18,6 +18,9 @@ import time
 import sys
 import json
 import random
+import csv
+from fastapi.responses import FileResponse
+
 # Function to load a dictionary from a JSON file
 def load_dict_from_json(file_path):
     with open(file_path, 'r') as file:
@@ -62,7 +65,6 @@ def conversation(user_response):
             parts.append(current_part)
         parts = list(filter(lambda item: item != '', parts))
         return parts
-
 
     def edit_sentences(sentences):
             def is_emoji(character):
@@ -280,10 +282,40 @@ def send(request: Request):
       
     data = load_dict_from_json('data.json')
     return templates.TemplateResponse("redirect.html", {"request": request,"users":data.values()})
+
+@app.get("/save_report_for_zu")
+def send(request: Request):
+    data = load_dict_from_json('data.json')
+    users = data.values()
+
+    # Specify the file path for the CSV
+    csv_file_path = 'report.csv'
+
+    # Define the fieldnames for the CSV
+    fieldnames = ['full_name', 'total_cost', 'total_tokens', 'total_chat_duration']
+
+    with open(csv_file_path, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+
+        # Write each user's data to the CSV file
+        for user in users:
+            if user['full_name']:
+                writer.writerow({
+                    'full_name': user['full_name'],
+                    'total_cost': user['total_cost'],
+                    'total_tokens': user['total_tokens'],
+                    'total_chat_duration': user['total_chat_duration']
+                })
+
+    # Return the CSV file as a response
+    return FileResponse(csv_file_path, filename='report.csv')
+    
 @app.get("/reset_tarek")
 def reset(request: Request):
     save_dict_to_json({}, 'data.json')
-
+      
+    
       
 if __name__ == "__main__":
     uvicorn.run("chat:app", reload=True)
