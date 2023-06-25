@@ -289,7 +289,7 @@ def send(request: Request):
     users = data.values()
 
     # Specify the file path for the CSV
-    csv_file_path = 'data.json'
+    csv_file_path = 'report.csv'
 
     # Define the fieldnames for the CSV
     fieldnames = ['full_name', 'total_cost', 'total_tokens', 'total_chat_duration']
@@ -309,12 +309,11 @@ def send(request: Request):
                 })
 
     # Return the CSV file as a response
-    return FileResponse(csv_file_path, filename='data.json')
+    return FileResponse(csv_file_path, filename='report.csv')
     
 @app.get("/reset_tarek")
 def reset(request: Request):
-    save_dict_to_json({}, 'data.json')
-      
+    save_dict_to_json({}, 'data.json')      
     
       
 if __name__ == "__main__":
