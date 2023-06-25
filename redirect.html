@@ -8,16 +8,43 @@
         .green { color: green; }
         .orange { color: orange; }
     </style>
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+    
+        td, th {
+            border: 1px solid black;
+            padding: 8px;
+        }
+    </style>
+  
 </head>
 <body>
-    {% for user in users %}
-        <li>
-            name: <span class="green">{{ user['full_name'] }}</span>|||
-            cost: <span class="red">{{ user['total_cost'] }}</span>|||
-            token: <span class="blue">{{ user['total_tokens'] }}</span>|||
-            total time: <span class="orange">{{ user['total_chat_duration'] }}</span>
-        </li>
-        <br>
-    {% endfor %}
+      
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Cost</th>
+                <th>Tokens</th>
+                <th>Total Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            {% if user['full_name'] %}
+                <tr>
+                    <td><span class="green">{{ user['full_name'] }}</span></td>
+                    <td><span class="red">{{ user['total_cost'] }}</span></td>
+                    <td><span class="blue">{{ user['total_tokens'] }}</span></td>
+                    <td><span class="orange">{{ user['total_chat_duration'] }}</span></td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    
 </body>
 </html>
