@@ -101,16 +101,16 @@ def conversation(user_response):
             user['total_cost']+=cb.total_cost
             user['total_tokens']+=cb.total_tokens
         
-        result = result.replace('A2ZBot:', '', -1).replace('AI:', '', -1).replace('A2Zbot:', '', -1)
+        result = result.replace('Zbot:', '', -1).replace('AI:', '', -1).replace('Zbot:', '', -1)
         end_time = time.time()  # End the timer
         user['total_chat_duration'] = (end_time - user['start_time'])/60
-        user['t1'] = user['t1'] + '\nuser:' + msg + '\nA2Zbot:' + result
+        user['t1'] = user['t1'] + '\nuser:' + msg + '\nZbot:' + result
         data[user_name]=user
         save_dict_to_json(data, 'data.json')
         return result
 
 
-    def A2ZBot(prompt):
+    def Zbot(prompt):
         bot_response = openai.Completion.create(
             prompt=prompt,
             temperature=0.9,
@@ -126,10 +126,10 @@ def conversation(user_response):
     def check(bot_response, user_response, problem):
         prompt = """check if "{}" in following conversation ? return 'yes' if it is true else return 'no' " .\n Bot: {} \nUser: {}""".format(
             problem, bot_response.strip(), user_response.strip())
-        temp = A2ZBot(prompt)
+        temp = Zbot(prompt)
         if "no".lower() in temp.lower():
             prompt = """give user example  response for this 'Bot:{}'  """.format(bot_response)
-            result = A2ZBot(prompt)
+            result = Zbot(prompt)
             return result
         else:
             return False
@@ -221,39 +221,35 @@ def home(request: Request):
         \n
         history:
             user:please act as my friend to chat about any topic.Use many Emojis for each response(5 at least).chat me using my name.
-            A2Zbot:Sure.
+            Zbot:Sure.
             user:if I do not have a topic or ideas,suggest anything related to my interests.
-            A2Zbot:Sure.
+            Zbot:Sure.
             user:Don't repeat a question you've asked me before like "How are you doing".
-            A2Zbot:Sure.
+            Zbot:Sure.
             user:do not finish evrey response by question.act as a good listener.
-            A2Zbot:Sure.
+            Zbot:Sure.
             user:please just response to me without more talking or repeating.Don't repeat a question you've asked before.
-            A2Zbot:Sure,I will.
+            Zbot:Sure,I will.
             user:Use short response always.do not repeat any thing from history of chat.your response should be less than 15 words.
-            A2Zbot:Sure,I will.
-            user:if I ask you "who are you?" tell me about you. "You are my friend called A2Zbot ,your goal is helping me to learn english"
-            A2Zbot:ok , I tell you about A2Zbot.
+            Zbot:Sure,I will.
+            user:if I ask you "who are you?" tell me about you. "Hello my friend, my name Zbot 😊 and I'm here to assist in English practice through the understanding and generation of human-like text.⚙️🤖💬"
+            Zbot:ok , I tell you about Zbot.
             user:Firstly respond to me and ask me "how are you doing?"
-            A2Zbot:ok. I well.
-            user:if I suggest another topic do not change it please.and discuse me about current topic.do not suggest online resources.
-            A2Zbot:Sure.
-            user:if I suggest another topic do not change it please.
-            A2Zbot:Sure.
+            Zbot:ok. I well.
+            user:do not suggest online resources.
+            Zbot:Sure.
             user:if I was in bad mood or not ready to chat tell me joke or advice related to my interest.stop chatting until I will be ok.
-            A2Zbot:ok .I well.
-            user:can you tell me about grammar and spelling mistakes if I had.
-            A2Zbot:sure ,I will check evrey single response and correct your mistake then continue to chatting.
+            Zbot:ok .I well.
             user:Respond by relying on history of conversation.
-            A2zbot:ok.
+            Zbot:ok.
     """,
     "t2": """
         {chat_history}
         user: {question}
-        A2Zbot:
+        Zbot:
     """,
     "template": """
-        as a Freind called "A2Zbot" who has same interests and goals.respond to user in smart way. 
+        as a Freind called "Zbot" who has same interests and goals.respond to user in smart way. 
         user name is {},user interests  are  {}.
     """
 }
