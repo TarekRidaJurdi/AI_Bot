@@ -1,4 +1,4 @@
-hideChat(0);
+hideChat(1);
 $('#prime').click(function() {
   toggleFab();
 });
@@ -42,11 +42,6 @@ function toggleFab() {
       $('.chat_header').toggleClass('chat_header2');
       $('.fab_field').toggleClass('fab_field2');
       $('.chat_converse').toggleClass('chat_converse2');
-      //$('#chat_converse').css('display', 'none');
-     // $('#chat_body').css('display', 'none');
-     // $('#chat_form').css('display', 'none');
-     // $('.chat_login').css('display', 'none');
-     // $('#chat_fullscreen').css('display', 'block');
   });
 
 function hideChat(hide) {
@@ -90,8 +85,7 @@ function hideChat(hide) {
             break;
     }
 }
-
-
+        
     $(document).ready(function() {
       var userResponseTimer; // Variable to track user response time
       
@@ -101,7 +95,8 @@ function hideChat(hide) {
         var userid = usernameElement.textContent;
         var rawTextWithUserId = rawText + '-#-' + userid;
         var userHtml = '<div class="chat_msg_item chat_msg_item_user">' + rawText + '</div>';
-        $('#chatSend').val("");
+        $('#chatSend').val(" ");
+        $('#chatSend').prop('readonly', true);
         $('#chat_converse').append(userHtml);
       
         // Clear the previous timer if any
@@ -122,7 +117,7 @@ function hideChat(hide) {
             }
       
             document.getElementById('userInput').scrollIntoView({ block: 'start', behavior: 'smooth' });
-            
+            $('#chatSend').prop('readonly', false);
         });
         
         // Set a timer to check for delayed user response
@@ -147,6 +142,7 @@ function hideChat(hide) {
       
                       $('#chatSend').keypress(function(e) {
                           if(e.which == 13) {
+                              
                               getBotResponse();
                               scrollToBottom();
                           }
