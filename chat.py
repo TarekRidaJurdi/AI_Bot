@@ -20,6 +20,32 @@ import json
 import random
 import csv
 from fastapi.responses import FileResponse
+import requests
+
+def grammar_check(text):
+    # إعداد النص للتحقق من الأخطاء القواعدية
+    payload = {'language': 'en-US', 'text': text}
+
+    # إرسال طلب التحقق إلى خدمة LanguageTool
+    response = requests.post('https://api.languagetool.org/v2/check', data=payload)
+
+    # تحليل الاستجابة
+    errors = []
+    if response.status_code == 200:
+        data = response.json()
+        for mistake in data['matches']:
+            if mistake['message']not in ['This sentence does not start with an uppercase letter.','Possible typo: you repeated a whitespace']:
+                errors.append(mistake['message'])
+
+    return errors
+def ZbotChecker(text):
+    errors=grammar_check(text)
+    if errors:
+        prompt="Correct “Text:{}” to standard English and place the results in “Correct Text:”".format(text)
+        return Zbot(prompt,"text-davinci-003",1)
+    else:
+        return False
+
 
 # Function to load a dictionary from a JSON file
 def load_dict_from_json(file_path):
@@ -39,7 +65,17 @@ for i in range(1,len(temp),2):
 os.environ["OPENAI_API_KEY"] = api_key
 
 openai.api_key = api_key
-COMPLETIONS_MODEL = "text-davinci-002"
+def Zbot(prompt,COMPLETIONS_MODEL,temperature):
+        bot_response = openai.Completion.create(
+            prompt=prompt,
+            temperature=1,
+            max_tokens=700,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+            model=COMPLETIONS_MODEL
+        )["choices"][0]["text"].strip(" \n")
+        return bot_response
 
 
 def conversation(user_response):
@@ -95,41 +131,40 @@ def conversation(user_response):
             verbose=False,
             memory=memory
         )
+        user['correct']=False
         result = llm_chain.predict(question=msg)
         with get_openai_callback() as cb:
             result = llm_chain.predict(question=msg)
             user['total_cost']+=cb.total_cost
             user['total_tokens']+=cb.total_tokens
         
-        result = result.replace('Zbot:', '', -1).replace('AI:', '', -1).replace('Zbot:', '', -1)
+        result = result.replace('Zbot:', '', -1).replace('AI:', '', -1).replace('Zbot:', '', -1).replace('<', '[<nocode]', -1)
         end_time = time.time()  # End the timer
         user['total_chat_duration'] = (end_time - user['start_time'])/60
+        temp2=user['t1']
         user['t1'] = user['t1'] + '\nuser:' + msg + '\nZbot:' + result
+        try :
+            prompt_template = PromptTemplate(input_variables=["chat_history", "question"], template=user['template'] + user['t1'] + user['t2'])
+        except:
+            user['t1']=temp2
+            user['t1'] = user['t1'] + '\nuser:' + msg + '\nZbot:' + 'here is your code ^__^'
         data[user_name]=user
         save_dict_to_json(data, 'data.json')
+        correct=ZbotChecker(msg)
+        if correct:
+            user['correct']=correct.replace('Correct','Corrected')
         return result
 
 
-    def Zbot(prompt):
-        bot_response = openai.Completion.create(
-            prompt=prompt,
-            temperature=0.9,
-            max_tokens=700,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
-            model=COMPLETIONS_MODEL
-        )["choices"][0]["text"].strip(" \n")
-        return bot_response
-
+    
 
     def check(bot_response, user_response, problem):
         prompt = """check if "{}" in following conversation ? return 'yes' if it is true else return 'no' " .\n Bot: {} \nUser: {}""".format(
             problem, bot_response.strip(), user_response.strip())
-        temp = Zbot(prompt)
+        temp =Zbot(prompt,"text-davinci-003",1)
         if "no".lower() in temp.lower():
             prompt = """give user example  response for this 'Bot:{}'  """.format(bot_response)
-            result = Zbot(prompt)
+            result = Zbot(prompt,"text-davinci-003",1)
             return result
         else:
             return False
@@ -137,39 +172,31 @@ def conversation(user_response):
 
     
     
+    
     if user['step'] == 'step1':
-        user['step'] = 'step2'
-        bot_response = "What is your name?😃"
-        user['history'].append(bot_response)
-        data[user_name]=user
-        save_dict_to_json(data, 'data.json')
-        return [bot_response]
-
-    if user['step'] == 'step2':
-        bot_response = check(user['history'][-1], user_response,
+        bot_response = check('What is your name?', user_response,
                              'user says his name no matter if he write his name in small letters')
         if bot_response:
-            return ['This is an example for good response:\n' + bot_response]
+            return ['This is an example for good response:\n' + bot_response+'✏️📝🔍📚📖']
         else:
             user['history'].append(user_response)
             user['full_name'] = user_response
-            user['step'] = 'step3'
-            bot_response = """
-                what are your interests?👋
-                """
+            user['step'] = 'step2'
+            bot_response = ["let's start by sharing with me your interest, so we can have a better journey together.","What are your interests?👋"]
+                
             user['history'].append(bot_response)
             data[user_name]=user
             save_dict_to_json(data, 'data.json')
-            return [bot_response]
+            return bot_response
     
-    if user['step'] == 'step3':
-        bot_response = check(user['history'][-1], user_response, 'User write his interests')
+    if user['step'] == 'step2':
+        bot_response = check('what are your intersts?', user_response, 'User write his interests')
         if bot_response:
-            return ['This is an example for good response:\n' + bot_response]
+            return ['This is an example for good response:\n' + bot_response+'✏️📝🔍📚📖']
         else:
             user['history'].append(user_response)
             user['interest'] = user_response
-            user['step'] = 'step4'
+            user['step'] = 'step3'
             user['history'].append(bot_response)
             user['template'] = user['template'].format(user['full_name'],user['interest'])
             data[user_name]=user
@@ -181,10 +208,13 @@ def conversation(user_response):
             save_dict_to_json(data, 'data.json')
             return edit_result
 
-    if user['step'] == 'step4' and user_response.strip() != 'RESET' and user_response.strip() != 'START_STUDY_PLAN':
+    if user['step'] == 'step3' and user_response.strip() != 'RESET' and user_response.strip() != 'START_STUDY_PLAN':
         temp = warmup(user_response)
         edit_result = convert_to_short_parts(temp, 30)
         edit_result = edit_sentences(edit_result)
+        if user['correct']:
+            a='<span style="color: green;">'+user['correct']+'✏️📝🔍📚📖'+'</span>'
+            edit_result.insert(0,a)
         data[user_name]=user
         save_dict_to_json(data, 'data.json')
         return edit_result
@@ -217,10 +247,11 @@ def home(request: Request):
     "total_cost":0.0,
     "total_tokens":0.0,
     "start_time":0.0,
+    "correct":False,
     "t1": """
         \n
         history:
-            user:please act as my friend to chat about any topic.Use many Emojis for each response(5 at least).chat me using my name.
+            user:please act as my friend to chat about any topic.Use many Emojis for each response(5 at least).
             Zbot:Sure.
             user:if I do not have a topic or ideas,suggest anything related to my interests.
             Zbot:Sure.
@@ -242,6 +273,12 @@ def home(request: Request):
             Zbot:ok .I well.
             user:Respond by relying on history of conversation.
             Zbot:ok.
+            user:can you write a code".
+            Zbot:No 😔😞.
+            user:do not return any code response,return "I am sorry, I can not write a code 😔😞".
+            Zbot:sure,code is not available 😔😞.
+            user:chat me using my name.
+            Zbot:Sure.
     """,
     "t2": """
         {chat_history}
@@ -263,16 +300,16 @@ def home(request: Request):
     return templates.TemplateResponse("home.html", {"request": request, "username": username})
 @app.get("/getChatBotResponse")
 def get_bot_response(msg: str,request: Request):
-    try: 
-        result = conversation(msg)
-        return result
-    except Exception as e:
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        try:
-            error_details = f"Exception Type: {exc_type}\nException Value: {exc_value}\nTraceback: {exc_traceback}"
-            return [error_details,str(sessions.keys())] 
-        except:
-            return ["empty data"]
+    #try: 
+    result = conversation(msg)
+    return result
+    #except Exception as e:
+     #   exc_type, exc_value, exc_traceback = sys.exc_info()
+      #  try:
+       #     error_details = f"Exception Type: {exc_type}\nException Value: {exc_value}\nTraceback: {exc_traceback}"
+        #    return [error_details,str(sessions.keys())] 
+        #except:
+         #   return ["empty data"]
 @app.get("/report_for_zu")
 def send(request: Request):
       
