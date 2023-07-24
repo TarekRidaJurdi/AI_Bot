@@ -380,7 +380,7 @@ def send(request: Request):
 def send(request: Request):
     try:
         # Logging an informational message
-        logger.info("Received a GET request to /save_report_for_zu")
+        logger.info("Received a GET request to /logs")
         return FileResponse('logs.log', filename='logs.log')
     except Exception as e:
         # Logging an error message
