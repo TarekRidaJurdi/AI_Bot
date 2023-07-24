@@ -21,6 +21,19 @@ import random
 import csv
 from fastapi.responses import FileResponse
 import requests
+# Step 1: Import the logging module
+import logging
+# Step 2: Set up a logger instance
+logger = logging.getLogger(__name__)
+file_handler = logging.FileHandler('logs.log')
+# Step 3: Configure logging level and output format
+#logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger.setLevel(logging.INFO)
+file_handler.setLevel(logging.INFO)
+log_format = '%(asctime)s - %(levelname)s - %(message)s'
+formatter = logging.Formatter(log_format)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 def grammar_check(text):
     # إعداد النص للتحقق من الأخطاء القواعدية
@@ -237,117 +250,152 @@ app.mount("/static", StaticFiles(directory=st_abs_file_path), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    
-    user = {
-    "full_name": None,
-    "interest": None,
-    "total_chat_duration": 0,
-    "step": "step1",
-    "history": [],
-    "total_cost":0.0,
-    "total_tokens":0.0,
-    "start_time":0.0,
-    "correct":False,
-    "t1": """
-        \n
-        history:
-            user:please act as my friend to chat about any topic.Use many Emojis for each response(5 at least).
-            Zbot:Sure.
-            user:Imagine yourself as a friend with his views and interests.
-            Zbot:ok.
-            user:if I do not have a topic or ideas,suggest anything related to my interests.
-            Zbot:Sure.
-            user:please just response to me without more talking or repeating.Don't repeat a question you've asked before.
-            Zbot:Sure,I will.
-            user:Use short response always.do not repeat any thing from history of chat.your response should be less than 15 words.
-            Zbot:Sure,I will.
-            user:if I ask you "who are you?" tell me about you. "Hello my friend, my name Zbot 😊 and I'm here to chat with you.⚙️🤖💬"
-            Zbot:ok , I tell you about Zbot.
-            user:Firstly respond to me and ask me "how are you doing?"
-            Zbot:ok. I well.
-            user:do not suggest online resources.
-            Zbot:Sure.
-            user:if I was in bad mood or not ready to chat tell me joke or advice related to my interest.stop chatting until I will be ok.
-            Zbot:ok .I well.
-            user:Respond by relying on history of conversation.
-            Zbot:ok.
-            user:do not return any code response,return "I am sorry, I can not write a code 😔😞".
-            Zbot:sure,code is not available 😔😞.
-            user:can you write a code".
-            Zbot:No 😔😞.
-            user:chat me using my name.
-            Zbot:Sure.
-            user:Let me lead the chat. You just listen.
-            Zbot:Of course! I'm here to listen to whatever you'd like to share.😊
-    """,
-    "t2": """
-        {chat_history}
-        user: {question}
-        Zbot:
-    """,
-    "template": """
-        as a Freind called "Zbot" who has same interests and goals.respond to user in smart way. 
-        user name is {},user interests  are  {}.
-    """
-}
-    
+    try:
+        # Logging an informational message
+        logger.info("Received a GET request to /")
+        user = {
+        "full_name": None,
+        "interest": None,
+        "total_chat_duration": 0,
+        "step": "step1",
+        "history": [],
+        "total_cost":0.0,
+        "total_tokens":0.0,
+        "start_time":0.0,
+        "correct":False,
+        "t1": """
+            \n
+            history:
+                user:please act as my friend to chat about any topic.Use many Emojis for each response(5 at least).
+                Zbot:Sure.
+                user:Imagine yourself as a friend with his views and interests.
+                Zbot:ok.
+                user:if I do not have a topic or ideas,suggest anything related to my interests.
+                Zbot:Sure.
+                user:please just response to me without more talking or repeating.Don't repeat a question you've asked before.
+                Zbot:Sure,I will.
+                user:Use short response always.do not repeat any thing from history of chat.your response should be less than 15 words.
+                Zbot:Sure,I will.
+                user:if I ask you "who are you?" tell me about you. "Hello my friend, my name Zbot 😊 and I'm here to chat with you.⚙️🤖💬"
+                Zbot:ok , I tell you about Zbot.
+                user:Firstly respond to me and ask me "how are you doing?"
+                Zbot:ok. I well.
+                user:do not suggest online resources.
+                Zbot:Sure.
+                user:if I was in bad mood or not ready to chat tell me joke or advice related to my interest.stop chatting until I will be ok.
+                Zbot:ok .I well.
+                user:Respond by relying on history of conversation.
+                Zbot:ok.
+                user:do not return any code response,return "I am sorry, I can not write a code 😔😞".
+                Zbot:sure,code is not available 😔😞.
+                user:can you write a code".
+                Zbot:No 😔😞.
+                user:chat me using my name.
+                Zbot:Sure.
+                user:Let me lead the chat. You just listen.
+                Zbot:Of course! I'm here to listen to whatever you'd like to share.😊
+        """,
+        "t2": """
+            {chat_history}
+            user: {question}
+            Zbot:
+        """,
+        "template": """
+            as a Freind called "Zbot" who has same interests and goals.respond to user in smart way. 
+            user name is {},user interests  are  {}.
+        """
+    }
+        
 
-    username =random.randint(1,9999999)
-    data = load_dict_from_json('data.json')
-    user['start_time']=time.time()
-    data[username]=user
-    save_dict_to_json(data, 'data.json')
-    return templates.TemplateResponse("home.html", {"request": request, "username": username})
+        username =random.randint(1,9999999)
+        data = load_dict_from_json('data.json')
+        user['start_time']=time.time()
+        data[username]=user
+        save_dict_to_json(data, 'data.json')
+        return templates.TemplateResponse("home.html", {"request": request, "username": username})
+    except Exception as e:
+        # Logging an error message
+        logger.error(f"An error occurred: {str(e)}")
+        # Handle the exception and return an appropriate response
 @app.get("/getChatBotResponse")
 def get_bot_response(msg: str,request: Request):
-    #try: 
-    result = conversation(msg)
-    return result
-    #except Exception as e:
-     #   exc_type, exc_value, exc_traceback = sys.exc_info()
-      #  try:
-       #     error_details = f"Exception Type: {exc_type}\nException Value: {exc_value}\nTraceback: {exc_traceback}"
-        #    return [error_details,str(sessions.keys())] 
-        #except:
-         #   return ["empty data"]
+    try:
+        # Logging an informational message
+        logger.info("Received a GET request to /getChatBotResponse")
+        result = conversation(msg)
+        return result
+    except Exception as e:
+        # Logging an error message
+        logger.error(f"An error occurred: {str(e)}")
+        # Handle the exception and return an appropriate response
+    
 @app.get("/report_for_zu")
 def send(request: Request):
-      
-    data = load_dict_from_json('data.json')
-    return templates.TemplateResponse("redirect.html", {"request": request,"users":data.values()})
+    try:
+        # Logging an informational message
+        logger.info("Received a GET request to /report_for_zu")  
+        data = load_dict_from_json('data.json')
+        return templates.TemplateResponse("redirect.html", {"request": request,"users":data.values()})
+    except Exception as e:
+        # Logging an error message
+        logger.error(f"An error occurred: {str(e)}")
+        # Handle the exception and return an appropriate response
+    
 
 @app.get("/save_report_for_zu")
 def send(request: Request):
-    data = load_dict_from_json('data.json')
-    users = data.values()
+    try:
+        # Logging an informational message
+        logger.info("Received a GET request to /save_report_for_zu")
+        data = load_dict_from_json('data.json')
+        users = data.values()
 
-    # Specify the file path for the CSV
-    csv_file_path = 'report.csv'
+        # Specify the file path for the CSV
+        csv_file_path = 'report.csv'
 
-    # Define the fieldnames for the CSV
-    fieldnames = ['full_name', 'total_cost', 'total_tokens', 'total_chat_duration']
+        # Define the fieldnames for the CSV
+        fieldnames = ['full_name', 'total_cost', 'total_tokens', 'total_chat_duration']
 
-    with open(csv_file_path, mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
+        with open(csv_file_path, mode='w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
 
-        # Write each user's data to the CSV file
-        for user in users:
-            if user['full_name']:
-                writer.writerow({
-                    'full_name': user['full_name'],
-                    'total_cost': user['total_cost'],
-                    'total_tokens': user['total_tokens'],
-                    'total_chat_duration': user['total_chat_duration']
-                })
+            # Write each user's data to the CSV file
+            for user in users:
+                if user['full_name']:
+                    writer.writerow({
+                        'full_name': user['full_name'],
+                        'total_cost': user['total_cost'],
+                        'total_tokens': user['total_tokens'],
+                        'total_chat_duration': user['total_chat_duration']
+                    })
 
-    # Return the CSV file as a response
-    return FileResponse(csv_file_path, filename='report.csv')
-    
+        # Return the CSV file as a response
+        return FileResponse(csv_file_path, filename='report.csv')
+    except Exception as e:
+        # Logging an error message
+        logger.error(f"An error occurred: {str(e)}")
+        # Handle the exception and return an appropriate response
+@app.get("/logs")
+def send(request: Request):
+    try:
+        # Logging an informational message
+        logger.info("Received a GET request to /save_report_for_zu")
+        return FileResponse('logs.log', filename='logs.log')
+    except Exception as e:
+        # Logging an error message
+        logger.error(f"An error occurred: {str(e)}")
+        # Handle the exception and return an appropriate response 
 @app.get("/reset_tarek")
 def reset(request: Request):
-    save_dict_to_json({}, 'data.json')      
-    
+    try:
+        # Logging an informational message
+        logger.info("Received a GET request to /reset_tarek")
+        save_dict_to_json({}, 'data.json')      
+    except Exception as e:
+        # Logging an error message
+        logger.error(f"An error occurred: {str(e)}")
+        # Handle the exception and return an appropriate response
       
 if __name__ == "__main__":
     uvicorn.run("chat:app", reload=True)
