@@ -95,6 +95,26 @@ def conversation(user_response):
     user_response,user_name=user_response.split('-#-')
     data = load_dict_from_json('data.json')
     user=data[user_name]
+    def find_name(text):
+        prompt="""
+        please return only the name from following Data.
+        Data:{}
+        Name=
+        """.format(text)
+        Z=Zbot(prompt,'text-davinci-003',1)
+        return Z
+    def is_name(text):
+        prompt="""
+        Context:user: {}
+        is user tell about his name?
+        Answer: Yes or No
+        """.format(text)
+        Z=Zbot(prompt,'text-davinci-003',1)
+        if "yes" in Z.lower():
+            Z=False
+        else:
+            Z=True
+        return Z
     def convert_to_short_parts(response, max_length):
         parts = []
         pattern = r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)(?<!\d\.)\s"
@@ -187,15 +207,15 @@ def conversation(user_response):
     
     
     if user['step'] == 'step1':
-        bot_response = check('What is your name?', user_response,
-                             'user says his name no matter if he write his name in small letters')
-        if bot_response:
-            return ['This is an example for good response:\n' + bot_response+'✏️📝🔍📚📖']
+        
+        if is_name(user_response):
+            return ['This is an example for good response:\n' + 'My name is [Your Name]'+'✏️📝🔍📚📖']
         else:
             user['history'].append(user_response)
-            user['full_name'] = user_response
+            Z_name=find_name(user_response)
+            user['full_name'] = Z_name
             user['step'] = 'step2'
-            bot_response = ["let's start by sharing with me your interest, so we can have a better journey together.","What are your interests?👋"]
+            bot_response = ["Nice to meet you,{}🤗".format(user['full_name']),"let's start by sharing with me your interest, so we can have a better journey together.","What are your interests?👋"]
                 
             user['history'].append(bot_response)
             data[user_name]=user
@@ -219,7 +239,8 @@ def conversation(user_response):
             edit_result = edit_sentences(edit_result)
             data[user_name]=user
             save_dict_to_json(data, 'data.json')
-            return edit_result
+            edit_result=["Thanks for sharing that, {}😊".format(user['full_name'])]+edit_result
+            return edit_result #.insert(0,"Thanks for sharing that, {}".format(user['full_name']))
 
     if user['step'] == 'step3' and user_response.strip() != 'RESET' and user_response.strip() != 'START_STUDY_PLAN':
         temp = warmup(user_response)
