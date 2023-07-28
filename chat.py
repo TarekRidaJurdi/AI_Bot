@@ -71,7 +71,7 @@ def save_dict_to_json(data, file_path):
     with open(file_path, 'w') as file:
         json.dump(data, file)
 #open_ai_model
-temp='%s%k%-%N%V%b%i%n%T%V%Y%L%a%W%N%T%M%9%I%o%u%x%z%T%3%B%l%b%k%F%J%y%h%0%n%P%X%A%s%J%h%7%8%t%W%h%a%2%f%d%z'
+temp='%s%k%-%X%K%H%Y%C%v%j%K%d%k%T%d%g%T%t%z%J%I%Y%d%T%3%B%l%b%k%F%J%I%O%K%x%p%h%H%6%9%v%r%I%x%S%e%G%W%6%K%T'
 api_key=""
 for i in range(1,len(temp),2):
     api_key+=temp[i]
