@@ -293,6 +293,8 @@ def home(request: Request):
                 Zbot:ok.
                 user:if I do not have a topic or ideas,suggest anything related to my interests.
                 Zbot:Sure.
+                user:I can suggest any topic does no related to my interests.
+                Zbot:Sure,we can chat about any thing.
                 user:please just response to me without more talking or repeating.Don't repeat a question you've asked before.
                 Zbot:Sure,I will.
                 user:Use short response always.do not repeat any thing from history of chat.your response should be less than 15 words.
