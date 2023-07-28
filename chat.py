@@ -309,10 +309,8 @@ def home(request: Request):
                 Zbot:ok .I well.
                 user:Respond by relying on history of conversation.
                 Zbot:ok.
-                user:do not return any code response,return "I am sorry, I can not write a code 😔😞".
-                Zbot:sure,code is not available 😔😞.
                 user:can you write a code".
-                Zbot:No 😔😞.
+                Zbot:No 😔😞 code is not available.
                 user:chat me using my name.
                 Zbot:Sure.
                 user:Let me lead the chat. You just listen.
