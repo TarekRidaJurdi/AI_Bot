@@ -34,7 +34,7 @@ log_format = '%(asctime)s - %(levelname)s - %(message)s'
 formatter = logging.Formatter(log_format)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
-COMPLETIONS_MODEL="text-davinci-003"
+
 def grammar_check(text):
     # إعداد النص للتحقق من الأخطاء القواعدية
     payload = {'language': 'en-US', 'text': text}
@@ -201,100 +201,13 @@ def conversation(user_response):
             return result
         else:
             return False
-    user_id=user_name
-    if user_response.strip().upper()=="MEMORIZE":
-        prompt="""
-            Vocabularies: {}
-            explain all Vocabularies like dectionary.⚙️🤖💬
-            use many and suitable emojis.
-            you must to explain each vocabulary or word as following template:
-            word:[]
-            word type:[]
-            definition:[] use emojis please.
-            Common synonyms:[]
-            
-            
-            """.format(user['Vocabularies'])
-        Z=Zbot(prompt,COMPLETIONS_MODEL,1)
-        Z=Z.split('\n')
-        Z=[x for x in Z if len(x.strip())>0 ]
-        return Z
-    if user['step'] == 'step11':
-        user['Vocabularies']=user_response.split(',')
-        data[user_id]=user
-        prompt="""
-        please use [] in response.
-        use the following vocabularies {} to create  3 role-playing  scenario.
-        1:
-        "user role":["Person Character"]
-        "bot role":["Person Character"]
-        "scenario":["description"]
-        2:
-        "user role":["Person Character"]
-        "bot role":["Person Character"]
-        "scenario":["description"]
-        3:
-        "user role":["Person Character"]
-        "bot role":["Person Character"]
-        "scenario":["description"]
-        """.format(user['Vocabularies'])
-        Z=Zbot(prompt,COMPLETIONS_MODEL,1)
-        while True:
-            if Z[-1]==']':
-                break
-            else:
-                Z=Zbot(prompt,COMPLETIONS_MODEL,1)
 
-        option1,option2,option3=Z[Z.find('1')+2:Z.find('2')],Z[Z.find('2')+2:Z.find('3')],Z[Z.find('3')+2:]
-        user['Role_Play_Options']=[option1,option2,option3]
-        user['step']='step22'
-        data[user_id]=user
-        save_dict_to_json(data, 'data.json')
-        option=user['Role_Play_Options'][user['option']]
-        p1=option[:option.find('bot role')-1]
-        p2=option[option.find('bot role')-1:option.find('scenario')-1]
-        p3=option[option.find('scenario')-1:]
-        return [p1,p2,p3,"Do you want to start the following role play scenario?"]
-    if user['step'] == 'step22':
-        if user_response.lower().strip()=='yes':
-            user['step']='step33'
-            user['prompt']="""
-                    Act as "Bot role" to start our conversation to learn me the following Vocabularies.use many emojis.
-                    first introuduce yourself.
-                    Just return Bot response.
-                    let's make our conversation shortly with many Emojis.
-                    "vocabularies":{}
-                    {}
-                    Bot :
-                    \n""".format(user['Vocabularies'],user['Role_Play_Options'][user['option']])
-            Z=Zbot(user['prompt'],COMPLETIONS_MODEL,1)
-            user['prompt']+=Z
-            data[user_id]=user
-            save_dict_to_json(data, 'data.json')
-            return [Z]
-        else:
-            user['option']=(user['option']+1)%len(user['Role_Play_Options'])
-            data[user_id]=user
-            save_dict_to_json(data, 'data.json')
-            option=user['Role_Play_Options'][user['option']]
-            p1=option[:option.find('bot role')-1]
-            p2=option[option.find('bot role')-1:option.find('scenario')-1]
-            p3=option[option.find('scenario')-1:]
-            return [p1,p2,p3,"Do you want to start the following role play scenario?"]
-            
-    if user['step'] == 'step33':
-        user['prompt']+='\n'+'User:'+user_response+'\nBot:'
-        Z=Zbot(user['prompt'],COMPLETIONS_MODEL,1)
-        user['prompt']+=Z
-        data[user_id]=user
-        save_dict_to_json(data, 'data.json')
-        edit_result = convert_to_short_parts(Z, 30)
-        edit_result = edit_sentences(edit_result)
-        return edit_result
+
     
     
     
-    if user['step'] == 'step1':    
+    if user['step'] == 'step1':
+        
         if is_name(user_response):
             return ['This is an example for good response:\n' + 'My name is [Your Name]'+'✏️📝🔍📚📖']
         else:
@@ -302,7 +215,7 @@ def conversation(user_response):
             Z_name=find_name(user_response)
             user['full_name'] = Z_name
             user['step'] = 'step2'
-            bot_response = ["Nice to meet you,{}🤗".format(user['full_name']),"let's start by sharing with me your interest, so we can have a better journey together.😃","What are your interests?👋"]
+            bot_response = ["Nice to meet you,{}🤗".format(user['full_name']),"let's start by sharing with me your interest, so we can have a better journey together.","What are your interests?👋"]
                 
             user['history'].append(bot_response)
             data[user_name]=user
@@ -425,34 +338,6 @@ def home(request: Request):
         # Logging an error message
         logger.error(f"An error occurred: {str(e)}")
         # Handle the exception and return an appropriate response
-@app.get("/aBot", response_class=HTMLResponse)
-def home(request: Request):
-    try:
-        # Logging an informational message
-        logger.info("Received a GET request to /")
-        user = {
-            'Vocabularies':None,
-            'Role_Play_Options':None,
-            'option':0,
-            'prompt':'',
-            'step':'step11'
-            
-        
-    }
-        
-
-        username =random.randint(1,9999999)
-        data = load_dict_from_json('data.json')
-        #user['start_time']=time.time()
-        data[username]=user
-        save_dict_to_json(data, 'data.json')
-        return templates.TemplateResponse("home1.html", {"request": request, "username": username})
-    except Exception as e:
-        # Logging an error message
-        logger.error(f"An error occurred: {str(e)}")
-        # Handle the exception and return an appropriate response
-
-
 @app.get("/getChatBotResponse")
 def get_bot_response(msg: str,request: Request):
     try:
