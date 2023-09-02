@@ -71,7 +71,7 @@ def save_dict_to_json(data, file_path):
     with open(file_path, 'w') as file:
         json.dump(data, file)
 #open_ai_model
-temp='%s%k%-%X%K%H%Y%C%v%j%K%d%k%T%d%g%T%t%z%J%I%Y%d%T%3%B%l%b%k%F%J%I%O%K%x%p%h%H%6%9%v%r%I%x%S%e%G%W%6%K%T'
+temp='%s%k%-%N%V%b%i%n%T%V%Y%L%a%W%N%T%M%9%I%o%u%x%z%T%3%B%l%b%k%F%J%y%h%0%n%P%X%A%s%J%h%7%8%t%W%h%a%2%f%d%z'
 api_key=""
 for i in range(1,len(temp),2):
     api_key+=temp[i]
@@ -95,26 +95,6 @@ def conversation(user_response):
     user_response,user_name=user_response.split('-#-')
     data = load_dict_from_json('data.json')
     user=data[user_name]
-    def find_name(text):
-        prompt="""
-        please return only the name from following Data.
-        Data:{}
-        Name=
-        """.format(text)
-        Z=Zbot(prompt,'text-davinci-003',1)
-        return Z
-    def is_name(text):
-        prompt="""
-        Context:user: {}
-        is user tell about his name?
-        Answer: Yes or No
-        """.format(text)
-        Z=Zbot(prompt,'text-davinci-003',1)
-        if "yes" in Z.lower():
-            Z=False
-        else:
-            Z=True
-        return Z
     def convert_to_short_parts(response, max_length):
         parts = []
         pattern = r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)(?<!\d\.)\s"
@@ -207,15 +187,15 @@ def conversation(user_response):
     
     
     if user['step'] == 'step1':
-        
-        if is_name(user_response):
-            return ['This is an example for good response:\n' + 'My name is [Your Name]'+'✏️📝🔍📚📖']
+        bot_response = check('What is your name?', user_response,
+                             'user says his name no matter if he write his name in small letters')
+        if bot_response:
+            return ['This is an example for good response:\n' + bot_response+'✏️📝🔍📚📖']
         else:
             user['history'].append(user_response)
-            Z_name=find_name(user_response)
-            user['full_name'] = Z_name
+            user['full_name'] = user_response
             user['step'] = 'step2'
-            bot_response = ["Nice to meet you,{}🤗".format(user['full_name']),"let's start by sharing with me your interest, so we can have a better journey together.","What are your interests?👋"]
+            bot_response = ["let's start by sharing with me your interest, so we can have a better journey together.","What are your interests?👋"]
                 
             user['history'].append(bot_response)
             data[user_name]=user
@@ -239,8 +219,7 @@ def conversation(user_response):
             edit_result = edit_sentences(edit_result)
             data[user_name]=user
             save_dict_to_json(data, 'data.json')
-            edit_result=["Thanks for sharing that, {}😊".format(user['full_name'])]+edit_result
-            return edit_result #.insert(0,"Thanks for sharing that, {}".format(user['full_name']))
+            return edit_result
 
     if user['step'] == 'step3' and user_response.strip() != 'RESET' and user_response.strip() != 'START_STUDY_PLAN':
         temp = warmup(user_response)
@@ -293,8 +272,6 @@ def home(request: Request):
                 Zbot:ok.
                 user:if I do not have a topic or ideas,suggest anything related to my interests.
                 Zbot:Sure.
-                user:I can suggest any topic does no related to my interests.
-                Zbot:Sure,we can chat about any thing.
                 user:please just response to me without more talking or repeating.Don't repeat a question you've asked before.
                 Zbot:Sure,I will.
                 user:Use short response always.do not repeat any thing from history of chat.your response should be less than 15 words.
@@ -309,12 +286,12 @@ def home(request: Request):
                 Zbot:ok .I well.
                 user:Respond by relying on history of conversation.
                 Zbot:ok.
+                user:do not return any code response,return "I am sorry, I can not write a code 😔😞".
+                Zbot:sure,code is not available 😔😞.
                 user:can you write a code".
-                Zbot:No 😔😞 code is not available.
+                Zbot:No 😔😞.
                 user:chat me using my name.
                 Zbot:Sure.
-                user:Let me lead the chat. You just listen.
-                Zbot:Of course! I'm here to listen to whatever you'd like to share.😊
         """,
         "t2": """
             {chat_history}
@@ -419,4 +396,4 @@ def reset(request: Request):
         # Handle the exception and return an appropriate response
       
 if __name__ == "__main__":
-    uvicorn.run("chat:app", reload=True)
+    uvicorn.run("chat:app",reload=True)
